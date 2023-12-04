@@ -6,17 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 import gym
 import argparse
-
-# set device to cpu or cuda
-print("=========================================")
-device = torch.device('cpu')
-if(torch.cuda.is_available()): 
-    device = torch.device('cuda:0') 
-    torch.cuda.empty_cache()
-    print("Device set to : " + str(torch.cuda.get_device_name(device)))
-else:
-    print("Device set to : cpu")
-print("=========================================")
+#from tabulate import tabulate
 
 class Actor(nn.Module):
     def __init__(self, obs_dim, act_dim, hidden_dim):
@@ -69,7 +59,7 @@ def get_returns(rewards, values, mask, gamma, lambda_):
     return returns
 
 class PPO:
-    def __init__(self, lr_a = 3e-3, lr_c = 3e-3, device = "cpu", **kwargs):
+    def __init__(self, env, device, **kwargs):
 
         # hyperparameters
         self.gamma   = kwargs.get("gamma")
@@ -87,8 +77,10 @@ class PPO:
         self.device = device
 
         # make the gym environment and get the observation and action dimensions
-        self.env    = gym.make(kwargs.get("env_name"))
-        self.obs_dim , self.act_dim = get_env_shape(self.env)
+        #self.env    = gym.make(kwargs.get("env_name"))
+        self.env = gym.make(env)
+        #self.obs_dim , self.act_dim = get_env_shape(self.env)
+        self.obs_dim, self.act_dim = 4, 8
         
         #initialize networks
         self.actor  = Actor(self.obs_dim, self.act_dim, hidden_dim)
@@ -243,6 +235,18 @@ class PPO:
     
 if __name__ == "__main__":
 
+    # set device to cpu or cuda
+    print("=========================================")
+    device = torch.device('cpu')
+    if(torch.cuda.is_available()): 
+        device = torch.device('cuda:0') 
+        torch.cuda.empty_cache()
+        print("Device set to : " + str(torch.cuda.get_device_name(device)))
+    else:
+        print("Device set to : cpu")
+    print("=========================================")
+
+
     parser = argparse.ArgumentParser()
 
     # environment
@@ -252,7 +256,7 @@ if __name__ == "__main__":
     parser.add_argument("--episodes", type=int, default=1000, help="number of episodes to run")
     parser.add_argument("-s", "--max_steps", type=int, default=100, help="number of steps per episode")
     parser.add_argument("--epochs", type=int, default=5, help="number of epochs per episode")
-    parser.add_argument("-mb", "--mini_batch_size", type=int, default=4, help="number of samples per mini batch")
+    parser.add_argument("-mb", "--mini_batch_size", type=int, default=6, help="number of samples per mini batch")
 
     # neural networks parameters
     parser.add_argument("--hidden_dim", type=int, default=256, help="number of neurons in the hidden layer")
@@ -262,7 +266,7 @@ if __name__ == "__main__":
     # policy gradient variables
     parser.add_argument("-g", "--gamma", type=float, default=0.99, help="set the discount factor")
     parser.add_argument("--epsilon", type=float, default=0.2, help="set the discount factor")
-    parser.add_argument("-l", "--lambda_", type=float, default=1, help="set the lambda value for the GAE")
+    parser.add_argument("-l", "--lambda_", type=float, default=0.95, help="set the lambda value for the GAE")
     
     # log of rewards and plot 
     parser.add_argument("-v", "--verbose", action="count", help="show log of rewards", default=0)
@@ -272,11 +276,18 @@ if __name__ == "__main__":
     args_dict = vars(args)
 
     env_name = args.env_name
-    print("#################################")
-    print("Running:", env_name)
-    print("#################################")
+    
+    #print("#################################")
+    #print("Running:", env_name)
+    #print("#################################")
 
-    model = PPO(device = device, **args_dict)
+    # Convert the dictionary directly to a list of tuples
+    #table_data = list(args_dict.items())
+
+    ## Print the table using tabulate
+    #print(tabulate(table_data, headers=["Key", "Value"], tablefmt="fancy_grid"))
+
+    model = PPO(env = env_name, device = device, **args_dict)
     episodes = args.episodes
 
     ###########################
