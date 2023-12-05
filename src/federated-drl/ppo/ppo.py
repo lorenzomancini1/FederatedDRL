@@ -78,6 +78,7 @@ class PPO:
 
         # make the gym environment and get the observation and action dimensions
         #self.env    = gym.make(kwargs.get("env_name"))
+        print("Initializing environment:", env)
         self.env = gym.make(env)
         #self.obs_dim , self.act_dim = get_env_shape(self.env)
         self.obs_dim, self.act_dim = 4, 8

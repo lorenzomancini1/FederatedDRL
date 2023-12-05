@@ -7,10 +7,27 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import gym
-#import veins_gym
+import veins_gym
 
 import argparse
 import os
+
+
+gym.register(
+    id="serpentine",
+    entry_point="veins_gym:VeinsEnv",
+    kwargs={
+        "scenario_dir": "../../scenario",
+    },
+)
+
+gym.register(
+    id="lysegeven",
+    entry_point="veins_gym:VeinsEnv",
+    kwargs={
+        "scenario_dir": "../../scenario3",
+    },
+)
 
 class FedPPO:
 
@@ -20,7 +37,7 @@ class FedPPO:
         self.kwargs = kwargs
 
         # initialize PPO objects
-        self.ppo_objs = [method.PPO(env_name=env, device = device, **kwargs) for env in envs]
+        self.ppo_objs = [method.PPO(env, device, **self.kwargs) for env in envs]
 
         #self.obs_dim, self.act_dim = self.ppo_objs[0].get_shape()
         self.obs_dim, self.act_dim = 4, 8
@@ -108,7 +125,7 @@ if __name__ == "__main__":
     print("=========================================") 
      
     parser = argparse.ArgumentParser()
-    parser.add_argument("-e", "--env", type=str, default="CartPole-v1", help="set the gym environment")
+    #parser.add_argument("-e", "--env", type=str, default="CartPole-v1", help="set the gym environment")
     parser.add_argument("-n", "--nclients", type=int, default=4, help="number of clients in the federation")
     parser.add_argument("--episodes", type=int, default=500, help="number of episodes to run")
     parser.add_argument("-s", "--max_steps", type=int, default=100, help="number of steps per episode")
@@ -137,12 +154,8 @@ if __name__ == "__main__":
     args_dict = vars(args)
 
     n = args.nclients
-    envs = ["CartPole-v1" for _ in range(n)]
-    #episodes = args.episodes
-    #freq = args.freq
-    #epochs = args.epochs
-    #max_steps = args.steps
-    #verbose = args.verbose
+    #envs = ["CartPole-v1" for _ in range(n)]
+    envs = ["serpentine", "lysegeven"]
 
     federation = FedPPO(envs, device=device, **args_dict)
     rewards_history = federation.train()
@@ -152,5 +165,3 @@ if __name__ == "__main__":
         # Create the directory
             os.makedirs("data_ppo")        
         np.savetxt('./data_ppo/n'+str(n)+'.txt', np.column_stack((range(args.episodes), rewards_history)), header='X-axis Y-axis', comments='')
-
-    
