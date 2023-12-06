@@ -12,6 +12,12 @@ import veins_gym
 import argparse
 import os
 
+# Define the folder to store checkpoints
+checkpoint_folder = 'model_checkpoints'
+
+# Create the folder if it doesn't exist
+if not os.path.exists(checkpoint_folder):
+    os.makedirs(checkpoint_folder)
 
 gym.register(
     id="serpentine",
@@ -98,6 +104,16 @@ class FedPPO:
 
             if episode % freq == 0: 
                 self.aggregate()
+                if episode % 100 == 0:
+                    # Save the model and other training-related information
+                    checkpoint_path = os.path.join
+                    (checkpoint_folder, f'model_checkpoint_episode_{episode}.pth')
+                    checkpoint = {
+                        'episode': episode,
+                        'model_state_dict': self.server.state_dict(),
+                    }
+                    # Save the checkpoint
+                    torch.save(checkpoint, checkpoint_path)
 
         if verbose >= 2:        
             fig = plt.figure(figsize = (5,5))
@@ -135,8 +151,8 @@ if __name__ == "__main__":
 
     # neural networks parameters
     parser.add_argument("--hidden_dim", type=int, default=256, help="number of neurons in the hidden layer")
-    parser.add_argument("-sa", "--step_actor", type=float, default=3e-3, help="step size of the actor optimizer")
-    parser.add_argument("-sc", "--step_critic", type=float, default=3e-3, help="step size of the critic optimizer")
+    parser.add_argument("--step_actor", type=float, default=3e-3, help="step size of the actor optimizer")
+    parser.add_argument("--step_critic", type=float, default=3e-3, help="step size of the critic optimizer")
 
     # variables for the training loop
     parser.add_argument("-g", "--gamma", type=float, default=0.99, help="set the discount factor")
