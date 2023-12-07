@@ -121,8 +121,8 @@ class PPO:
 
             # we don't need the gradients for the moment. We will compute them again in the epochs loop
             with torch.no_grad():
-                policy = self.actor(torch.tensor(state).unsqueeze(0))
-                value  = self.critic(torch.tensor(state).unsqueeze(0))
+                policy = self.actor(torch.tensor(state).unsqueeze(0).to(self.device))
+                value  = self.critic(torch.tensor(state).unsqueeze(0).to(self.device))
 
             dist = policy.numpy() # set the policy to numpy vector
 
@@ -148,7 +148,7 @@ class PPO:
         
         # to compute the returns we need the value of the (n+1)-th state
         with torch.no_grad():
-            values[stop] = self.critic(torch.tensor(new_state).unsqueeze(0))
+            values[stop] = self.critic(torch.tensor(new_state).unsqueeze(0).to(self.device))
             
         states    = states[:stop]
         actions   = actions[:stop]
