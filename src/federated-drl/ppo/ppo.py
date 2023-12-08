@@ -84,12 +84,12 @@ class PPO:
         self.obs_dim, self.act_dim = 4, 8
         
         #initialize networks
-        self.actor  = Actor(self.obs_dim, self.act_dim, hidden_dim)
-        self.critic = Critic(self.obs_dim, hidden_dim)
+        self.actor  = Actor(self.obs_dim, self.act_dim, hidden_dim).to(device)
+        self.critic = Critic(self.obs_dim, hidden_dim).to(device)
 
         #initialize optimizers
-        self.optimizer_a = optim.Adam(self.actor.parameters(),  lr = lr_a)
-        self.optimizer_c = optim.Adam(self.critic.parameters(), lr = lr_c)
+        self.optimizer_a = optim.Adam(self.actor.parameters(),  lr = lr_a).to(device)
+        self.optimizer_c = optim.Adam(self.critic.parameters(), lr = lr_c).to(device)
 
     def get_actor(self):
         return self.actor
@@ -171,8 +171,8 @@ class PPO:
 
         mini_batch_size = self.mini_batch_size
     
-        actor_loss  = torch.empty(mini_batch_size)#, dtype = object)
-        critic_loss = torch.empty(mini_batch_size)
+        actor_loss  = torch.empty(mini_batch_size).to(self.device)#, dtype = object)
+        critic_loss = torch.empty(mini_batch_size).to(self.device)
 
         for i in range(mini_batch_size):
             # get the current state and action
@@ -188,16 +188,16 @@ class PPO:
             return_ = returns[i]
 
             # compute the current log probability and the old one
-            curr_log_prob = torch.log(policy.squeeze(0)[action])
+            curr_log_prob = torch.log(policy.squeeze(0)[action]).to(self.device)
             old_log_prob  = log_probs[i]
 
             # compute the ratio beween new and old log prob
-            ratio = (curr_log_prob - old_log_prob).exp()
-            s1    = ratio * adv
-            s2    = torch.clamp(ratio, 1.0 - self.epsilon, 1.0 + self.epsilon) * adv
+            ratio = ((curr_log_prob - old_log_prob).exp()).to(self.device)
+            s1    = (ratio * adv).to(self.device)
+            s2    = (torch.clamp(ratio, 1.0 - self.epsilon, 1.0 + self.epsilon) * adv).to(self.device)
 
             actor_loss[i]  = torch.min(s1, s2) 
-            critic_loss[i] = return_ - value
+            critic_loss[i] = (return_ - value).to(self.device)
 
         # compute the losses
         epoch_actor_loss  = - actor_loss.mean()
@@ -221,7 +221,7 @@ class PPO:
         assert len(states) == len(log_probs) == len(returns) == len(advantages)
 
         high = len(states)
-        n = self.mini_batch_size
+        n    = self.mini_batch_size
 
         # get some random indexes for the trajectory
         random_idxs = np.random.randint(0, high, n)
